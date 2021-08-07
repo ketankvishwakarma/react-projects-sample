@@ -28,8 +28,8 @@ function App() {
   ];
 
   
-  const List = (props) => {
-    return props.list.map((item) => (
+  const List = ({list}) => {
+    return list.map((item) => (
       <div key={item.objectID}>
         <span>
           <a href={item.url}>{item.title}</a>
@@ -50,7 +50,7 @@ function App() {
       localStorage.setItem(key, value);
     }, [value,key]);
 
-    return [value,key]
+    return [value,setValue]
   };
   
   const [searchTerm,setSearchTerm] = useSemiPersistentState('search','React');
@@ -67,27 +67,30 @@ function App() {
       <h1>
         {welcome.greeting} {welcome.title}
       </h1>
-      <Search search={searchTerm} onSearch={handleSearch} />
-      <hr />
-      <List list={searchedStories} />
+      <InputWithLabel 
+      id="search"
+      label="Search"
+      type="text"
+      value={searchTerm}
+      onInputChange={handleSearch}
+      />
+      <hr/>
+      &nbsp;
+      <List list={searchedStories}/>
     </div>
   );
 }
 
-const Search = (props) => {
-  return (
-    <div>
-      <label htmlFor="search">Search: </label>
-      <input
-        id="search"
-        type="text"
-        onChange={props.onSearch}
-        value={props.search}
-      />
-      <p>
-        Searching for <strong>{props.search}</strong>.
-      </p>
-    </div>
-  );
-};
+const InputWithLabel =({id,label,value,type,onInputChange})=>(
+  <>
+    <label htmlFor={id}>{label}</label>
+    &nbsp; &nbsp;
+    <input 
+      id={id}
+      type={type}
+      value={value}
+      onChange={onInputChange}></input>
+  </>
+);
+
 export default App;
