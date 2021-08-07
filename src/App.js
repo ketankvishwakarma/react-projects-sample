@@ -67,23 +67,25 @@ function App() {
       <h1>
         {welcome.greeting} {welcome.title}
       </h1>
-      <InputWithLabel 
-      id="search"
-      label="Search"
-      type="text"
-      value={searchTerm}
-      onInputChange={handleSearch}
-      />
-      <hr/>
+      <InputWithLabel
+        id="search"
+        label="Search"
+        type="text"
+        value={searchTerm}
+        onInputChange={handleSearch}
+      >
+        <strong>Search: </strong>
+      </InputWithLabel>
+      <hr />
       &nbsp;
-      <List list={searchedStories}/>
+      <List list={searchedStories} />
     </div>
   );
 }
 
-const InputWithLabel =({id,label,value,type,onInputChange})=>(
+const InputWithLabel =({id,label,value,type,onInputChange,children})=>(
   <>
-    <label htmlFor={id}>{label}</label>
+   {children}
     &nbsp; &nbsp;
     <input 
       id={id}
