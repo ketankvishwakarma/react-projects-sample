@@ -6,6 +6,19 @@ const welcome = {
   greeting: "Hello",
   title: "Sweety!",
 };
+const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
+
+const useSemiPersistentState = (key, initialState) => {
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
+
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
+
+  return [value, setValue];
+};
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -41,28 +54,7 @@ const storiesReducer = (state, action) => {
 };
 
 function App() {
-  const initialStories = [
-    {
-      title: "React",
-      url: "https://reactjs.org/",
-      author: "Jordan Walke",
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-    },
-    {
-      title: "Redux",
-      url: "https://redux.js.org/",
-      author: "Dan Abramov, Andrew Clark",
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-    },
-  ];
-
-  //const [stories, setStories] = React.useState(initialStories);
-  //const [isLoading, setIsLoading] = React.useState(false);
-  //const [isError, setIsError] = React.useState(false);
+  const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "React");
 
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
@@ -71,36 +63,21 @@ function App() {
   });
 
   React.useEffect(() => {
+    if (!searchTerm) return;
+
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    getAsyncStories()
+    fetch(`${API_ENDPOINT}${searchTerm}`)
+      .then((response) => response.json())
       .then((result) => {
         dispatchStories({
           type: "STORIES_FETCH_SUCCESS",
-          payload: result.data.stories,
+          payload: result.hits,
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
-  }, []);
+  }, [searchTerm]);
 
-  const getAsyncStories = () =>
-    new Promise((resolve, reject) =>
-      setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
-    );
-
-  const useSemiPersistentState = (key, initialState) => {
-    const [value, setValue] = useState(
-      localStorage.getItem(key) || initialState
-    );
-
-    React.useEffect(() => {
-      localStorage.setItem(key, value);
-    }, [value, key]);
-
-    return [value, setValue];
-  };
-
-  const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -113,44 +90,7 @@ function App() {
     });
   };
 
-  const Item = ({ item, onRemoveItem }) => {
-    function handleRemoveItem() {
-      onRemoveItem(item);
-    }
-
-    return (
-      <div>
-        <span>
-          <a href={item.url}>{item.title}</a>
-        </span>
-        &nbsp;
-        <span>written by {item.author}</span>
-        &nbsp;
-        <span>
-          has <b>{item.num_comments}</b> comments
-        </span>
-        &nbsp;
-        <span>
-          and scores <b>{item.points}</b> points
-        </span>
-        <span>
-          <button type="button" onClick={() => onRemoveItem(item)}>
-            Dismiss
-          </button>
-        </span>
-      </div>
-    );
-  };
-
-  const List = ({ list, onRemoveItem }) => {
-    return list.map((item) => (
-      <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
-    ));
-  };
-
-  const searchedStories = stories.data.filter((story) =>
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  
   return (
     <div>
       <h1>
@@ -172,7 +112,7 @@ function App() {
       {stories.isLoading ? (
         <p>Loading...</p>
       ) : (
-        <List list={searchedStories} onRemoveItem={handleRemoveStories} />
+        <List list={stories.data} onRemoveItem={handleRemoveStories} />
       )}
     </div>
   );
@@ -210,4 +150,28 @@ const InputWithLabel = ({
   );
 };
 
+const List = ({ list, onRemoveItem }) =>
+  list.map(item => (
+    <Item
+      key={item.objectID}
+      item={item}
+      onRemoveItem={onRemoveItem}
+    />
+  ));
+
+const Item = ({ item, onRemoveItem }) => (
+  <div>
+    <span>
+      <a href={item.url}>{item.title}</a>
+    </span>
+    <span>{item.author}</span>
+    <span>{item.num_comments}</span>
+    <span>{item.points}</span>
+    <span>
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Dismiss
+      </button>
+    </span>
+  </div>
+);
 export default App;
